@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.jmbernabeu.LimpiaLinux</id>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>LimpiaLinux</name>
+  <summary>Limpieza de Zorin OS y sistemas basados en Debian</summary>
+
+  <developer id="jose.jmbernabeu">
+    <name>Jose Manuel Bernabeu Mejias</name>
+  </developer>
+
+  <description>
+    <p>
+      LimpiaLinux libera espacio y mantiene limpio tu sistema:
+      papelera, caches de aplicaciones y navegadores, miniaturas,
+      ficheros temporales, cache de apt, paquetes huerfanos, nucleos
+      antiguos, registros del sistema y logs rotados.
+    </p>
+    <p>
+      Interfaz grafica nativa (GTK3) y linea de comandos. Las tareas de
+      sistema elevan permisos con pkexec/polkit sin ejecutar la interfaz
+      como root. Distribuido bajo la GPLv3 o posterior.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">limpialinux.desktop</launchable>
+
+  <content_rating type="oars-1.1"/>
+
+  <url type="homepage">https://github.com/JMBermejias/limpialinux</url>
+  <url type="bugtracker">https://github.com/JMBermejias/limpialinux/issues</url>
+  <url type="vcs-browser">https://github.com/JMBermejias/limpialinux</url>
+
+  <releases>
+    <release version="1.0.0" date="2026-09-17"/>
+  </releases>
+</component>

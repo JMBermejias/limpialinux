@@ -44,6 +44,30 @@ sudo dpkg -i limpialinux_1.0.0_all.deb
 
 Dependencias necesarias (se instalan automáticamente): `python3`, `python3-gi`, `gir1.2-gtk-3.0` y `policykit-1`.
 
+### Instalación desde menú visual o tienda
+
+El paquete incluye metadatos **AppStream** (`org.jmbernabeu.LimpiaLinux.metainfo.xml`) con la **licencia GPL-3.0-or-later**, el desarrollador **Jose Manuel Bernabeu Mejias** y el icono propio. Por eso, al abrirlo con Zorin Software, Ubuntu Software o cualquier instalador de `.deb`, se muestra la licencia, el autor y el icono de forma correcta.
+
+Se puede instalar abriendo el fichero `.deb` directamente:
+
+```bash
+gnome-software ./limpialinux_1.0.0_all.deb
+```
+
+### Repositorio apt oficial (firmado)
+
+Para instalar y recibir actualizaciones desde un repositorio firmado (Zorin Software lo mostrará como fuente firmada):
+
+```bash
+sudo install -d -m 0755 /usr/share/keyrings
+curl -fsSL https://JMBermejias.github.io/limpialinux/limpialinux.gpg \
+  | sudo tee /usr/share/keyrings/limpialinux.gpg >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/limpialinux.gpg] https://JMBermejias.github.io/limpialinux/ stable main" \
+  | sudo tee /etc/apt/sources.list.d/limpialinux.list >/dev/null
+sudo apt update
+sudo apt install limpialinux
+```
+
 ## Uso
 
 Abre la aplicación desde el menú del sistema o ejecuta:
@@ -64,11 +88,36 @@ La primera vez que limpies tareas de **Sistema** se mostrará una pantalla de au
 Desde este repositorio:
 
 ```bash
-python3 build_deb.py               # genera dist/limpialinux_1.0.0_all.deb
+python3 build_deb.py               # genera dist/limpialinux_1.0.0_all.deb firmado
+python3 build_deb.py --no-sign     # sin firma gpg
 python3 build_deb.py --version 1.1.0
 ```
 
 No requiere `dpkg-deb` ni `debhelper`: se construye con la librería estándar de Python, por lo que se puede compilar en cualquier sistema.
+
+## Autenticidad y firma
+
+Cada `.deb` publicado está **firmado por Jose Manuel Bernabeu Mejias** con una firma embebida compatible con `dpkg-sig` (miembro `_gpgbuilder`, formato v4). La clave pública es `65E47AE0C97A8D837493584A82EDEF9F1E4AF32C`:
+
+```bash
+gpg --show-keys assets/pubkey.asc
+```
+
+Para verificar un paquete:
+
+```bash
+# con dpkg-sig (Debian/Ubuntu: sudo apt install dpkg-sig)
+dpkg-sig --verify limpialinux_1.0.0_all.deb
+
+# sin instalar nada más (usa gpg)
+python3 verify_deb.py dist/limpialinux_1.0.0_all.deb
+```
+
+El repositorio apt firmado se regenera con:
+
+```bash
+python3 build_repo.py   # genera repo/ con Release, InRelease y Release.gpg firmados
+```
 
 ## Estructura
 
@@ -76,9 +125,12 @@ No requiere `dpkg-deb` ni `debhelper`: se construye con la librería estándar d
 ├── core.py              # motor de limpieza (catálogo de tareas)
 ├── limpialinux.py       # interfaz gráfica (GTK3) y línea de comandos
 ├── root_helper.py       # helper privilegiado (pkexec), solo acepta tareas permitidas
-├── build_deb.py         # generador del paquete .deb
-├── assets/              # icono, lanzador .desktop y política polkit
-└── .github/workflows/   # CI: compila y publica el .deb al hacer tag v*
+├── build_deb.py         # generador del paquete .deb (firma gpg embebida)
+├── build_repo.py        # generador del repositorio apt firmado
+├── verify_deb.py        # comprobador de la firma de un .deb
+├── bump_version.py      # incremento de versión (pyproject.toml + código)
+├── assets/pubkey.asc    # clave pública del autor (firma)
+└── .github/workflows/   # CI: build+release automáticos en cada cambio
 ```
 
 ## Seguridad

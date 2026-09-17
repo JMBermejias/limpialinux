@@ -1,52 +1,49 @@
-name: Build & Release
+name: Build, sign & release
 
 on:
   push:
     branches:
       - main
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 permissions:
   contents: write
+  pages: write
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  build-deb:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Read version
-        id: version
-        run: |
-          VERSION=$(python3 -c "import re; print(re.search(r'^version = \"([^\"]+)\"', open('pyproject.toml').read(), re.M).group(1))")
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-
-      - name: Build .deb
-        run: python3 build_deb.py --version "$VERSION"
-
-      - name: Upload .deb artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: deb-build
-          path: dist/limpialinux_*.deb
-          if-no-files-found: error
-
   release:
-    needs: [build-deb]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Evita el bucle: el commit marcador generado por este mismo run
+      # no debe volver a bumpear (aunque los push con GITHUB_TOKEN no
+      # disparan otros runs, es una red de seguridad extra).
+      - name: Skip auto-bump on release commits
+        run: |
+          if [ "$(git log -1 --format=%s)" = "chore(release): bump version" ]; then
+            echo "Commit de release, se omite el bump."
+            echo "SKIP=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Auto-bump version
+        if: env.SKIP != '1'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          NEW=$(python3 bump_version.py patch)
+          echo "Version bumpada a $NEW"
+          git add pyproject.toml limpialinux.py
+          git commit -m "chore(release): bump version to $NEW"
+          git push origin main
+          git tag "v$NEW"
+          git push origin "v$NEW"
 
       - name: Read version
         id: version
@@ -54,26 +51,76 @@ jobs:
           VERSION=$(python3 -c "import re; print(re.search(r'^version = \"([^\"]+)\"', open('pyproject.toml').read(), re.M).group(1))")
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
-      - name: Download .deb artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: deb-build
-          path: deb_assets/
+      - name: Import signing key
+        if: env.GPG_PRIVATE_KEY != ''
+        run: |
+          gpg --batch --import assets/pubkey.asc
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
 
-      - name: Create/update release
+      - name: Build signed .deb
+        id: build
+        run: |
+          python3 build_deb.py --version "$VERSION"
+          if python3 verify_deb.py dist/limpialinux_${VERSION}_all.deb >/dev/null 2>&1; then
+            echo "Paquete FIRMADO correctamente."
+            echo "signed=si" >> "$GITHUB_OUTPUT"
+          else
+            echo "Paquete sin firma (falta la clave privada del secret GPG_PRIVATE_KEY)."
+            echo "signed=no" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', env.VERSION) }}
+          tag_name: v${{ env.VERSION }}
           name: LimpiaLinux ${{ env.VERSION }}
           body: |
             Paquete .deb para **Zorin OS** y sistemas basados en **Debian/Ubuntu**.
+
+            - **Firmado**: ${{ steps.build.outputs.signed == 'si' && 'SÍ, por Jose Manuel Bernabeu Mejias' || 'no (añade el secret GPG_PRIVATE_KEY)' }}
+            - Licencia **GPL-3.0-or-later**, desarrollador **Jose Manuel Bernabeu Mejias**.
 
             Instalación:
             ```
             sudo apt install ./limpialinux_${{ env.VERSION }}_all.deb
             ```
+            Verificación:
+            ```
+            python3 verify_deb.py limpialinux_${{ env.VERSION }}_all.deb
+            ```
           files: |
-            deb_assets/limpialinux_*.deb
+            dist/limpialinux_*.deb
+            assets/pubkey.asc
             LICENSE
           generate_release_notes: true
           prerelease: false
+
+      - name: Build signed apt repository
+        run: |
+          python3 build_repo.py
+          test -f repo/limpialinux.gpg && echo "Repo firmado OK"
+
+      - name: Publish apt repository branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd repo
+          git init -b repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "repo: LimpiaLinux ${{ env.VERSION }}"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push -f origin repo
+
+      - name: Enable GitHub Pages from repo branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${GITHUB_REPOSITORY}/pages \
+            -d '{"source":{"branch":"repo","path":"/"}}' || echo "Pages ya configurado o sin permisos."

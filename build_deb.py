@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (C) 2026 JMBermejas
+# Copyright (C) 2026 Jose Manuel Bernabeu Mejias
 #
 # LimpiaLinux is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,11 +28,13 @@ import hashlib
 import io
 import os
 import re
+import subprocess
 import tarfile
+import time
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PACKAGE = "limpialinux"
-MAINTAINER = "JMBermejas"
+MAINTAINER = "Jose Manuel Bernabeu Mejias"
 HOMEPAGE = "https://github.com/JMBermejias/limpialinux"
 DESCRIPTION = "Limpieza de Zorin OS y sistemas basados en Debian"
 
@@ -119,7 +121,7 @@ def copyright_text():
         "Source: {homepage}\n"
         "\n"
         "Files: *\n"
-        "Copyright: 2026 JMBermejas\n"
+        "Copyright: 2026 Jose Manuel Bernabeu Mejias\n"
         "License: GPL-3.0-or-later\n"
         " This program is free software: you can redistribute it and/or modify\n"
         " it under the terms of the GNU General Public License as published by\n"
@@ -157,6 +159,8 @@ def build_tree():
         "usr/share/icons/hicolor/scalable/apps/limpialinux.svg": "assets/limpialinux.svg",
         "usr/share/polkit-1/actions/com.jmbernabeu.limpialinux.policy":
             "assets/com.jmbernabeu.limpialinux.policy",
+        "usr/share/metainfo/org.jmbernabeu.LimpiaLinux.metainfo.xml":
+            "assets/org.jmbernabeu.LimpiaLinux.metainfo.xml",
     }
     for rel, src in assets.items():
         files[rel] = (os.path.join(ROOT, src), 0o644)
@@ -215,7 +219,102 @@ def ar_member(name, data, mode=0o100644):
     return header + payload
 
 
-def build_deb(version):
+def ar_member_sig(name, data):
+    """Miembro ar estilo dpkg-sig: nombre sin '/' y timestamp del instante."""
+    hdr = ("%-16s" % name)[:16]
+    size = str(len(data))
+    mode_s = "%06o" % 0o100644
+    header = (hdr + str(int(time.time())).rjust(12) + "0".rjust(6) +
+              "0".rjust(6) + mode_s.rjust(8) + size.rjust(10) + "`\n").encode()
+    payload = data
+    if len(payload) % 2:
+        payload += b"\n"
+    return header + payload
+
+
+def gpg_default_key():
+    """Devuelve el keyid de la clave que coincide con el autor, o None."""
+    try:
+        out = subprocess.run(
+            ["gpg", "--batch", "--with-colons", "--list-secret-keys",
+             "--fingerprint"],
+            capture_output=True, text=True, timeout=20)
+        fprs = [l.split(":")[9] for l in out.stdout.splitlines()
+                if l.startswith("fpr:")]
+        author = any("Jose Manuel Bernabeu Mejias" in l
+                     for l in out.stdout.splitlines() if l.startswith("uid:"))
+        if author and fprs:
+            return fprs[0]
+        return fprs[0] if fprs else None
+    except Exception:
+        return None
+
+
+def gpg_clearsign(message, keyid):
+    """Firma el mensaje con gpg (formato clearsign, como dpkg-sig)."""
+    cmd = ["gpg", "--openpgp", "--armor", "--batch", "--yes",
+           "--local-user", keyid, "--clearsign"]
+    proc = subprocess.run(cmd, input=message.encode(), capture_output=True,
+                          timeout=60)
+    if proc.returncode != 0:
+        raise RuntimeError("gpg --clearsign fallo: %s" %
+                           proc.stderr.decode(errors="replace"))
+    return proc.stdout
+
+
+def deb_member_digests(members):
+    """(name, data) -> [(name, size, sha1, md5)] en orden de archivo."""
+    out = []
+    for name, data in members:
+        md5 = hashlib.md5(data).hexdigest()
+        sha1 = hashlib.sha1(data).hexdigest()
+        out.append((name, len(data), sha1, md5))
+    return out
+
+
+def sig_info_text(digests, signer):
+    """Mensaje de firma compatible con dpkg-sig v4."""
+    now = time.strftime("%a %b %e %H:%M:%S %Y")
+    lines = ["Version: 4",
+             "Signer: %s" % signer,
+             "Date: %s" % now,
+             "Role: builder",
+             "Files: "]
+    for name, size, sha1, md5 in digests:
+        lines.append("\t%s %s %d %s" % (md5, sha1, size, name))
+    return "\n".join(lines) + "\n"
+
+
+def sign_deb(deb_bytes, signer=MAINTAINER, keyid=None):
+    """Firma el .deb y devuelve el ar appendado con el miembro _gpgbuilder."""
+    members = parse_ar(deb_bytes)
+    digests = deb_member_digests(members)
+    keyid = keyid or gpg_default_key()
+    if keyid is None:
+        raise RuntimeError("No hay clave gpg de Jose Manuel Bernabeu Mejias")
+    armor = gpg_clearsign(sig_info_text(digests, signer), keyid)
+    return (deb_bytes, armor, "builder", members)
+
+
+def parse_ar(deb_bytes):
+    """Lee los miembros ar de un .deb -> [(name, data)]."""
+    if not deb_bytes.startswith(b"!<arch>\n"):
+        raise ValueError("No es un archivo ar valido")
+    members, pos = [], 8
+    while pos + 60 <= len(deb_bytes):
+        hdr = deb_bytes[pos:pos + 60]
+        name = hdr[:16].decode("latin1").strip().rstrip("/").strip()
+        try:
+            size = int(hdr[48:58].strip() or b"0")
+        except ValueError:
+            break
+        data = deb_bytes[pos + 60:pos + 60 + size]
+        members.append((name, data))
+        pos += 60 + size + (size % 2)
+    return members
+
+
+def build_deb(version, sign=True, keyid=None):
     # lanzador
     os.makedirs(os.path.join(ROOT, "build"), exist_ok=True)
     with open(os.path.join(ROOT, "build", "usr-bin-limpialinux"), "w") as f:
@@ -287,17 +386,35 @@ def build_deb(version):
     deb = (ar_member("debian-binary", b"2.0\n", 0o100644) +
            ar_member("control.tar.gz", control_tar, 0o100644) +
            ar_member("data.tar.gz", data_tar, 0o100644))
+    deb_bytes = b"!<arch>\n" + deb
+
+    if sign:
+        try:
+            deb, armor, _role, _members = sign_deb(deb_bytes, keyid=keyid)
+            deb_bytes = deb + ar_member_sig("_gpgbuilder", armor)
+            signed = True
+        except RuntimeError as exc:
+            print("AVISO: no se firmo el paquete: %s" % exc)
+            signed = False
+    else:
+        signed = False
 
     out = os.path.join(out_dir, "%s_%s_all.deb" % (PACKAGE, version))
     with open(out, "wb") as f:
-        f.write(b"!<arch>\n" + deb)
+        f.write(deb_bytes)
     print("Paquete generado:", out)
-    print("Ficheros:", len(files), "- Tamano:", len(deb), "bytes")
+    print("Ficheros:", len(files), "- Tamano:", len(deb_bytes),
+          "bytes", "- Firmado:", "si" if signed else "no")
     return out
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Genera el .deb de LimpiaLinux")
     parser.add_argument("--version", default=None)
+    parser.add_argument("--no-sign", action="store_true",
+                        help="no firmar el paquete con gpg")
+    parser.add_argument("--key", default=None,
+                        help="keyid gpg para firmar (automatico por defecto)")
     args = parser.parse_args()
-    build_deb(args.version or read_version())
+    build_deb(args.version or read_version(), sign=not args.no_sign,
+              keyid=args.key)
