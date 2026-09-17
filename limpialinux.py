@@ -584,7 +584,7 @@ def run_gui(Gtk, Glib, Gio):
             dlg.set_website(HOMEPAGE)
             dlg.set_website_label("GitHub")
             dlg.set_authors([AUTHOR])
-            dlg.set_license_type(Gtk.License.GPL_3_0_OR_LATER)
+            dlg.set_license_type(Gtk.License.GPL_3_0)
             dlg.run()
             dlg.destroy()
 
