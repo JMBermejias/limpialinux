@@ -133,6 +133,20 @@ python3 build_repo.py   # genera repo/ con Release, InRelease y Release.gpg firm
 └── .github/workflows/   # CI: build+release automáticos en cada cambio
 ```
 
+## Solución de problemas
+
+Si al pulsar el icono la aplicación no se abre, ejecútala desde un terminal para ver el error exacto:
+
+```bash
+limpialinux
+```
+
+- **`No se pudo cargar GTK`**: faltan dependencias. Instálalas con
+  `sudo apt install python3-gi gir1.2-gtk-3.0` (renueva el `.deb` si lo
+  instalaste con `dpkg -i` sin gestionar dependencias).
+- El detalle de cualquier error de arranque queda registrado en
+  `~/.cache/limpialinux/limpialinux.log`.
+
 ## Seguridad
 
 - La interfaz nunca se ejecuta como `root`; las tareas de sistema se elevan con `pkexec` y una política polkit propia.

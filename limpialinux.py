@@ -36,6 +36,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 
 import core
 
@@ -44,6 +45,40 @@ APP_ID = "org.jmbernabeu.LimpiaLinux"
 VERSION = "1.0.1"
 
 ROOT_HELPER = "/usr/lib/limpialinux/root_helper.py"
+
+
+def _error_log_path():
+    base = os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache")
+    return os.path.join(base, "limpialinux", "limpialinux.log")
+
+
+def log_error(msg):
+    """Escribe el error en ~/.cache/limpialinux/limpialinux.log."""
+    try:
+        os.makedirs(os.path.dirname(_error_log_path()), exist_ok=True)
+        with open(_error_log_path(), "a") as f:
+            f.write("%s %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"), msg))
+    except Exception:
+        pass
+
+
+def show_error(msg):
+    """Muestra el error de forma visible (zenity/kdialog/notify) o por consola."""
+    log_error(msg)
+    tools = [
+        (["zenity", "--error", "--text=%s" % msg], "zenity --error"),
+        (["kdialog", "--error", msg], "kdialog --error"),
+        (["notify-send", "--urgency=critical", APP_NAME, msg], "notify-send"),
+    ]
+    for args, name in tools:
+        if shutil.which(name.split()[0]):
+            try:
+                subprocess.run(args, stdin=subprocess.DEVNULL,
+                               timeout=8, check=False)
+                return
+            except Exception:
+                pass
+    print(msg, file=sys.stderr)
 
 
 def _run(argv, **kw):
@@ -161,6 +196,7 @@ def run_gui(gtk, Glib, Gio):
                                            title=APP_NAME, default_width=780,
                                            default_height=660)
             self.set_border_width(0)
+            self._busy = False
             self._rows = {}
             self._status_lbl = None
             self._disk_bar = None
@@ -498,13 +534,34 @@ def main(argv=None):
         gi.require_version("Gtk", "3.0")
         from gi.repository import Gtk, GLib, Gio
     except Exception as e:
-        print("No se pudo iniciar la interfaz grafica: %s" % e, file=sys.stderr)
-        print("Instala los paquetes: python3-gi y gir1.2-gtk-3.0",
-              file=sys.stderr)
+        log_error("No se pudo cargar GTK (python3-gi/gir1.2-gtk-3.0): %s" % e)
+        show_error(
+            "No se pudo iniciar la interfaz grafica de %s.\n\n"
+            "Motivo: %s\n\n"
+            "Instala las dependencias y vuelve a intentarlo:\n"
+            "  sudo apt install python3-gi gir1.2-gtk-3.0\n\n"
+            "Detalle en: %s"
+            % (APP_NAME, e, _error_log_path()))
         return 1
 
-    app = run_gui(Gtk, GLib, Gio)()
-    return app.run(sys.argv)
+    try:
+        app = run_gui(Gtk, GLib, Gio)()
+        return app.run(sys.argv)
+    except Exception as e:
+        log_error("Fallo al iniciar la interfaz grafica: %s" % e)
+        try:
+            import traceback
+        except Exception:
+            traceback = None
+        if traceback is not None:
+            tb = traceback.format_exc()
+            for line in tb.splitlines():
+                log_error("  " + line)
+        show_error(
+            "Fallo al iniciar la interfaz grafica de %s.\n\n"
+            "Motivo: %s\n\n"
+            "Detalle en: %s" % (APP_NAME, e, _error_log_path()))
+        return 1
 
 
 if __name__ == "__main__":
