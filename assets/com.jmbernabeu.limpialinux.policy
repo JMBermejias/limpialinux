@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/polkit-policyconfig.dtd">
+<policyconfig>
+  <vendor>LimpiaLinux</vendor>
+  <vendor_url>https://github.com/jmbernabeu/limpialinux</vendor_url>
+  <icon_name>limpialinux</icon_name>
+
+  <action id="com.jmbernabeu.limpialinux.clean">
+    <description>Run system cleanup</description>
+    <description xml:lang="es">Ejecutar la limpieza del sistema</description>
+    <message>Authentication is required to clean system files with LimpiaLinux.</message>
+    <message xml:lang="es">Se requiere autenticacion para limpiar archivos del sistema con LimpiaLinux.</message>
+    <defaults>
+      <allow_any>auth_admin_keep</allow_any>
+      <allow_inactive>auth_admin_keep</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/lib/limpialinux/root_helper.py</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+
+</policyconfig>

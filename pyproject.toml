@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "limpialinux"
+version = "1.0.0"
+description = "Aplicacion de limpieza para Zorin OS y sistemas basados en Debian: cache de apt, papelera, caches de navegadores, kernels antiguos, registros del sistema y mas."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "GPL-3.0-or-later" }
+license-files = ["LICENSE"]
+authors = [{ name = "JMBermejas" }]
+
+[project.urls]
+Homepage = "https://github.com/jmbernabeu/limpialinux"
+
+[project.scripts]
+limpialinux = "limpialinux:main"
+
+[tool.setuptools]
+py-modules = ["limpialinux", "core", "root_helper"]

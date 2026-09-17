@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=LimpiaLinux
+Name[es]=LimpiaLinux
+GenericName=System cleaner
+GenericName[es]=Limpieza del sistema
+Comment=Clean Zorin OS and Debian based systems
+Comment[es]=Limpieza de Zorin OS y sistemas basados en Debian
+Exec=limpialinux
+Icon=limpialinux
+Terminal=false
+Categories=System;Utility;
+StartupNotify=true
+Keywords=clean;cleaner;disk;cache;limpieza;
