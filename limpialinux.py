@@ -206,6 +206,9 @@ def run_gui(Gtk, Glib, Gio):
 
             self._build_header()
             self._build_body()
+            # GTK3 no muestra los hijos por defecto: sin esto la ventana
+            # aparece vacia.
+            self.show_all()
             self.connect("delete-event", self._on_close)
 
         # --- construccion
