@@ -189,7 +189,7 @@ def cmd_clean(ids, all_=False):
 
 # ------------------------------------------------------------ parte GUI
 
-def run_gui(gtk, Glib, Gio):
+def run_gui(Gtk, Glib, Gio):
     class LimpiaWindow(Gtk.ApplicationWindow):
         def __init__(self, app):
             Gtk.ApplicationWindow.__init__(self, application=app,
