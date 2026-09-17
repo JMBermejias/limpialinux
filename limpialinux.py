@@ -43,8 +43,49 @@ import core
 APP_NAME = "LimpiaLinux"
 APP_ID = "org.jmbernabeu.LimpiaLinux"
 VERSION = "1.0.5"
+HOMEPAGE = "https://github.com/JMBermejias/limpialinux"
+AUTHOR = "Jose Manuel Bernabeu Mejias"
+AUTHOR_ADDRESS = ("Calle Médico Rafael Navarro 2 2C, Novelda 03660 "
+                  "(Alicante), España")
+LICENSE_PATH = "/usr/share/doc/limpialinux/LICENSE"
 
 ROOT_HELPER = "/usr/lib/limpialinux/root_helper.py"
+
+HELP_TEXT = (
+    "<b>Cómo funciona %s</b>\n\n"
+    "1. Pulsa <b>Analizar</b> para ver el espacio que se puede liberar.\n"
+    "2. Marca las tareas que quieras. Las de <b>Sistema</b> pedirán el "
+    "permiso de administrador al limpiar.\n"
+    "3. Pulsa <b>Limpiar</b> para ejecutarlas.\n\n"
+    "<b>Usuario (sin permisos):</b> papelera, cache de aplicaciones, "
+    "miniaturas, caches de navegadores y temporales.\n"
+    "<b>Sistema (con administrador):</b> cache de apt, descargas "
+    "interrumpidas, paquetes huérfanos, kernels antiguos, registros del "
+    "sistema, logs rotados y cache de pip. Se elevan con pkexec/polkit; la "
+    "interfaz nunca se ejecuta como root.\n\n"
+    "También puedes usarla por terminal:\n"
+    "  <tt>limpialinux --list</tt>  lista las tareas\n"
+    "  <tt>limpialinux --analyze</tt>  analiza el espacio recuperable\n"
+    "  <tt>limpialinux --clean papelera,cache-usuario</tt>  limpia tareas\n"
+    "  <tt>limpialinux --clean-all</tt>  limpia todas las seguras\n"
+    "  <tt>limpialinux --version</tt>"
+) % APP_NAME
+
+
+def _license_text():
+    """Devuelve el texto completo de la GPLv3 (instalado o del repo)."""
+    candidates = (
+        LICENSE_PATH,
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "LICENSE"),
+    )
+    for p in candidates:
+        try:
+            with open(p) as f:
+                return f.read()
+        except OSError:
+            continue
+    return ("Licencia GPL-3.0-or-later.\n"
+            "No se pudo leer el texto completo de la licencia.")
 
 
 def _error_log_path():
@@ -224,6 +265,13 @@ def run_gui(Gtk, Glib, Gio):
             clean.get_style_context().add_class("suggested-action")
             clean.connect("clicked", self._on_clean_clicked)
             hb.pack_end(clean)
+
+            for label, handler in (("Ayuda", self._on_help_clicked),
+                                   ("Licencia", self._on_license_clicked),
+                                   ("Autor", self._on_about_clicked)):
+                btn = Gtk.Button.new_with_label(label)
+                btn.connect("clicked", handler)
+                hb.pack_end(btn)
 
         def _build_body(self):
             box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
@@ -476,6 +524,54 @@ def run_gui(Gtk, Glib, Gio):
                 dlg.destroy()
 
             self._start_worker(work, done, "Limpiar")
+
+        def _on_help_clicked(self, _w):
+            dlg = Gtk.MessageDialog(
+                self, Gtk.DialogFlags.MODAL, Gtk.MessageType.INFO,
+                Gtk.ButtonsType.OK, "Ayuda de %s" % APP_NAME)
+            dlg.format_secondary_markup(HELP_TEXT)
+            dlg.run()
+            dlg.destroy()
+
+        def _on_license_clicked(self, _w):
+            dlg = Gtk.Dialog(title="Licencia de %s" % APP_NAME,
+                             transient_for=self, modal=True)
+            dlg.add_button("Cerrar", Gtk.ResponseType.CLOSE)
+            box = dlg.get_content_area()
+            box.set_border_width(12)
+            sw = Gtk.ScrolledWindow()
+            sw.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+            sw.set_size_request(640, 460)
+            tv = Gtk.TextView()
+            tv.set_editable(False)
+            tv.set_wrap_mode(Gtk.WrapMode.WORD)
+            tv.set_left_margin(4)
+            tv.set_right_margin(4)
+            tv.get_buffer().set_text(_license_text())
+            sw.add(tv)
+            box.pack_start(sw, True, True, 0)
+            box.show_all()
+            dlg.set_default_size(660, 500)
+            dlg.run()
+            dlg.destroy()
+
+        def _on_about_clicked(self, _w):
+            dlg = Gtk.AboutDialog()
+            dlg.set_transient_for(self)
+            dlg.set_program_name(APP_NAME)
+            dlg.set_version(VERSION)
+            dlg.set_logo_icon_name(APP_NAME.lower())
+            dlg.set_comments(
+                "Limpieza de Zorin OS y sistemas basados en Debian.\n\n"
+                "Creado por: %s\n%s\ncopyright (C) 2026 %s"
+                % (AUTHOR, AUTHOR_ADDRESS, AUTHOR))
+            dlg.set_copyright("Copyright (C) 2026 %s" % AUTHOR)
+            dlg.set_website(HOMEPAGE)
+            dlg.set_website_label("GitHub")
+            dlg.set_authors([AUTHOR])
+            dlg.set_license_type(Gtk.License.GPL_3_0_OR_LATER)
+            dlg.run()
+            dlg.destroy()
 
         def _on_close(self, *_):
             return False

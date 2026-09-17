@@ -83,6 +83,13 @@ limpialinux --version
 
 La primera vez que limpies tareas de **Sistema** se mostrará una pantalla de autenticación de administrador. La aplicación nunca se ejecuta como root.
 
+En la barra superior hay tres botones con información del programa:
+
+- **Ayuda**: explica cómo funciona la aplicación (analizar, marcar y limpiar).
+- **Licencia**: muestra el texto completo de la **GPL-3.0-or-later**.
+- **Autor**: credenciales de creación — **Jose Manuel Bernabeu Mejias**,
+  Calle Médico Rafael Navarro 2 2C, Novelda 03660 (Alicante), España.
+
 ## Compilar el paquete .deb
 
 Desde este repositorio:
