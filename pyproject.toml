@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "limpialinux"
-version = "1.0.0"
+version = "1.0.1"
 description = "Aplicacion de limpieza para Zorin OS y sistemas basados en Debian: cache de apt, papelera, caches de navegadores, kernels antiguos, registros del sistema y mas."
 readme = "README.md"
 requires-python = ">=3.8"
