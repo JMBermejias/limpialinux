@@ -42,7 +42,7 @@ import core
 
 APP_NAME = "LimpiaLinux"
 APP_ID = "org.jmbernabeu.LimpiaLinux"
-VERSION = "1.0.5"
+VERSION = "1.0.6"
 HOMEPAGE = "https://github.com/JMBermejias/limpialinux"
 AUTHOR = "Jose Manuel Bernabeu Mejias"
 AUTHOR_ADDRESS = ("Calle Médico Rafael Navarro 2 2C, Novelda 03660 "
