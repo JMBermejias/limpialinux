@@ -42,7 +42,7 @@ import core
 
 APP_NAME = "LimpiaLinux"
 APP_ID = "org.jmbernabeu.LimpiaLinux"
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 
 ROOT_HELPER = "/usr/lib/limpialinux/root_helper.py"
 
