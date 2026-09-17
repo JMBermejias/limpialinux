@@ -144,6 +144,13 @@ limpialinux
 - **`No se pudo cargar GTK`**: faltan dependencias. Instálalas con
   `sudo apt install python3-gi gir1.2-gtk-3.0` (renueva el `.deb` si lo
   instalaste con `dpkg -i` sin gestionar dependencias).
+- **aviso `_apt` al instalar un `.deb`** ("La descarga está siendo realizada
+  en un sandbox como superusuario..."): es un aviso inofensivo de `apt`, no
+  un fallo. Su usuario interno de sandbox no puede leer el `.deb` dentro de
+  tu home. La instalación se completa igualmente; para evitarlo:
+  - instala con `sudo dpkg -i limpialinux.deb && sudo apt -f install -y`, o
+  - mueve el `.deb` a `/tmp`: `sudo apt install -y /tmp/limpialinux.deb`, o mejor,
+  - usa el repositorio oficial: `sudo apt install -y limpialinux`.
 - El detalle de cualquier error de arranque queda registrado en
   `~/.cache/limpialinux/limpialinux.log`.
 
