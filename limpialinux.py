@@ -88,6 +88,19 @@ def _license_text():
             "No se pudo leer el texto completo de la licencia.")
 
 
+def _gui_excepthook(exc_type, exc, tb):
+    """Captura excepciones en los manejadores de GTK (sino pasan desapercibidas)."""
+    try:
+        import traceback as _tb
+        msg = "Fallo interno de la interfaz:\n%s" % exc
+        log_error(msg)
+        for line in "".join(_tb.format_exception(exc_type, exc, tb)).splitlines():
+            log_error("  " + line)
+        show_error(msg + "\n\nDetalle en: %s" % _error_log_path())
+    except Exception:
+        pass
+
+
 def _error_log_path():
     base = os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache")
     return os.path.join(base, "limpialinux", "limpialinux.log")
@@ -558,6 +571,8 @@ def run_gui(Gtk, Glib, Gio):
         def _on_about_clicked(self, _w):
             dlg = Gtk.AboutDialog()
             dlg.set_transient_for(self)
+            dlg.set_modal(True)
+            dlg.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
             dlg.set_program_name(APP_NAME)
             dlg.set_version(VERSION)
             dlg.set_logo_icon_name(APP_NAME.lower())
@@ -642,6 +657,8 @@ def main(argv=None):
             "Detalle en: %s"
             % (APP_NAME, e, _error_log_path()))
         return 1
+
+    sys.excepthook = _gui_excepthook
 
     try:
         app = run_gui(Gtk, GLib, Gio)()
