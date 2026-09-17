@@ -1,0 +1,20 @@
+Package: limpialinux
+Version: 1.0.8
+Architecture: all
+Maintainer: Jose Manuel Bernabeu Mejias
+Installed-Size: 52
+Depends: python3, python3-gi, gir1.2-gtk-3.0, policykit-1
+Section: admin
+Priority: optional
+Homepage: https://github.com/JMBermejias/limpialinux
+Description: Limpieza de Zorin OS y sistemas basados en Debian
+ Limpia la papelera, caches de aplicaciones y navegadores,
+ paquetes huerfanos, kernels antiguos, registros del sistema
+ y logs rotados. Interfaz grafica (GTK3) y CLI. GPLv3 o
+ posterior.
+Filename: pool/main/l/limpialinux/limpialinux_1.0.8_all.deb
+Size: 54256
+MD5sum: c2f26f02299d85594df12df5ed00a978
+SHA1: 95a9c110c9024f1d8fe896c6d69c0d86b58ac98c
+SHA256: 7e1525634e5a73b56f83edd6125abf63325273702cab1d8a06c41bfd8d63b77f
+

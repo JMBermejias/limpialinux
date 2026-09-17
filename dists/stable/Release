@@ -1,0 +1,25 @@
+Origin: LimpiaLinux
+Label: LimpiaLinux signed repository
+Suite: stable
+Codename: stable
+Version: 1.0
+Architectures: all amd64
+Components: main
+Description: Repositorio oficial de LimpiaLinux, firmado por Jose Manuel Bernabeu Mejias.
+Date: Thu, 17 Sep 2026 14:22:09 +0000
+
+MD5Sum:
+SHA1:
+SHA256:
+ 3b9689c1403665d63bd88199ef16a338              743 main/binary-all/Packages
+ e93047bf93af401de22a0ee34c0bb2a1b5c23a90              743 main/binary-all/Packages
+ 597850bb229f08f644357e9b4b4bed766376eff971c046ae6b6a7adecf4c2d07              743 main/binary-all/Packages
+ 4c37b85f321cb4a92eb37a8673001435              537 main/binary-all/Packages.gz
+ 6ebaf856c350373c7a827deb4a4abb4ce627b7ac              537 main/binary-all/Packages.gz
+ 04d1b7d583316a322b1da374dd828d4a335e62a117140f703f79df54dc116808              537 main/binary-all/Packages.gz
+ 3b9689c1403665d63bd88199ef16a338              743 main/binary-amd64/Packages
+ e93047bf93af401de22a0ee34c0bb2a1b5c23a90              743 main/binary-amd64/Packages
+ 597850bb229f08f644357e9b4b4bed766376eff971c046ae6b6a7adecf4c2d07              743 main/binary-amd64/Packages
+ 4c37b85f321cb4a92eb37a8673001435              537 main/binary-amd64/Packages.gz
+ 6ebaf856c350373c7a827deb4a4abb4ce627b7ac              537 main/binary-amd64/Packages.gz
+ 04d1b7d583316a322b1da374dd828d4a335e62a117140f703f79df54dc116808              537 main/binary-amd64/Packages.gz
