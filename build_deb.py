@@ -33,7 +33,7 @@ import tarfile
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PACKAGE = "limpialinux"
 MAINTAINER = "JMBermejas"
-HOMEPAGE = "https://github.com/jmbernabeu/limpialinux"
+HOMEPAGE = "https://github.com/JMBermejias/limpialinux"
 DESCRIPTION = "Limpieza de Zorin OS y sistemas basados en Debian"
 
 # Dependencias minimas: python3 + GTK3 (interfaz) y polkit (elevacion de las

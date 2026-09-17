@@ -30,7 +30,7 @@ Licencia **GPL-3.0-or-later**.
 
 ## Instalación
 
-Descarga el paquete `.deb` desde [Releases](https://github.com/jmbernabeu/limpialinux/releases) y ejecuta:
+Descarga el paquete `.deb` desde [Releases](https://github.com/JMBermejias/limpialinux/releases) y ejecuta:
 
 ```bash
 sudo apt install ./limpialinux_1.0.0_all.deb
@@ -89,4 +89,4 @@ No requiere `dpkg-deb` ni `debhelper`: se construye con la librería estándar d
 
 ## Repositorio
 
-Código fuente y paquetes de release en [github.com/jmbernabeu/limpialinux](https://github.com/jmbernabeu/limpialinux).
+Código fuente y paquetes de release en [github.com/JMBermejias/limpialinux](https://github.com/JMBermejias/limpialinux).
